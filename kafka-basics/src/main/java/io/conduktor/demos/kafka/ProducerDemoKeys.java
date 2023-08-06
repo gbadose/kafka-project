@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-public class ProducerDemoWithCallback {
+public class ProducerDemoKeys {
 
-    public static final Logger log = LoggerFactory.getLogger(ProducerDemoWithCallback.class.getSimpleName());
+    public static final Logger log = LoggerFactory.getLogger(ProducerDemoKeys.class.getSimpleName());
     public static void main(String[] args) {
         log.info("I am a Kafka producer.");
 
@@ -35,35 +35,41 @@ public class ProducerDemoWithCallback {
         // create producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
-        for (int i=0; i<10; i++){
-            // create producer record
-            ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "This is awesome " + i);
+        for (int j=0; j<2; j++){
 
-            // send data
-            producer.send(producerRecord, new Callback() {
-                @Override
-                public void onCompletion(RecordMetadata metadata, Exception e) {
-                    // executes every time a record is sent successfully or an exception is thrown
-                    if (e == null){
-                        // successful
-                        log.info("Received new metadata \n" +
-                                "Topic: " + metadata.topic() + "\n" +
-                                "Partition: " + metadata.partition() + "\n" +
-                                "Offset: " + metadata.offset() + "\n" +
-                                "Timestamp: " + metadata.timestamp());
-                    } else{
-                        log.error("Error while producing", e);
+            for (int i=0; i<10; i++){
+
+                String topic = "demo_java";
+                String key = "id_" + i;
+                String value = "This is awesome " + i;
+
+
+                // create producer record
+                ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, key, value);
+
+                // send data
+                producer.send(producerRecord, new Callback() {
+                    @Override
+                    public void onCompletion(RecordMetadata metadata, Exception e) {
+                        // executes every time a record is sent successfully or an exception is thrown
+                        if (e == null){
+                            // successful
+                            log.info("Key: " + key + " | Partition: " + metadata.partition());
+                        } else{
+                            log.error("Error while producing", e);
+                        }
+
                     }
+                });
 
-                }
-            });
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
         }
-
-
-
-
-
 
         // flush and close producer
         producer.flush();
